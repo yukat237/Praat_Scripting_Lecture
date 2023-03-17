@@ -1,0 +1,25 @@
+------------## Vowel Plot ##---------------
+
+### Notes ###################################################################################
+
+# This script assumes that: 
+#       - you have a data table of multiple f1 and f2 of English vowels info from multiple speakers 
+#         (although this should work for 1 person and/or 1 data for each vowel)
+#       - The table must have 4 columns: speaker, vowel, f1, f2 (from left to right)
+# Use this after you download a .Table file from Praat with "Save as comma-separated file..."
+
+# Before running, put the file address of your table file below within the quotations
+      tableFileAdress <- ""
+
+#############################################################################################
+
+#----Import the table ----#
+vowelTable <- read.delim(tableFileAdress, sep = ",", fileEncoding = "UTF-16")
+
+#----Rearrange the table ----#
+vowelTable2 <- vowelTable %>% group_by(speaker, vowel) %>% summarise(meanF1= mean(f1), meanF2= mean(f2), .groups = 'drop') %>% as.data.frame()
+
+#----Vowel Chart Plotting ----#
+ggplot(vowelTable2, aes(x=meanF2, y=meanF1, label=vowel, color=vowel))+ geom_text()+
+  scale_x_reverse()+
+  scale_y_reverse()
