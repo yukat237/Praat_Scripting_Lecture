@@ -1,0 +1,105 @@
+#############################################################
+
+#Script to make a F1/F2 summary table (w/ full explanations)
+
+#############################################################
+
+
+#------------READ ME------------#
+
+#What you want to tell users before they use this script:
+# Make sure you have folder(s) containing the names of sound files and textgrid files are the same
+# In those folder, make sure there is no unrelated .wav file or .TextGrid file.
+
+# This script works with any amount of data.
+
+#-------------------------------#
+# "C:\Users\yzt5262\OneDrive - The Pennsylvania State University\Desktop\GuestLecture\guest lecture sd and tg"
+
+#####   FORM   #####------------------------------------------------------
+
+form Filepath
+	comment Where are sounds saved? (Do not include quotation marks!)
+	text sound
+
+	comment Where are textgrids saved?
+	text tg
+endform
+
+#Make string objects---------------
+#This step is to make a string object that lists 
+#+ "/*.wav", <= this is to specify you want to list only the files that has THIS in its file name. this is to avoid listing anyother unrelated files within the given directory.
+sdID = Create Strings as file list: "Sd string", sound$ + "/*.wav"
+tgID = Create Strings as file list: "Tg string", tg$ + "/*.TextGrid"
+
+#Make table to summurize data on (final product)-----------
+tableID = Create Table with column names... vowelTable 0 speaker vowel f1 f2
+
+#####   LOOP    #####------------------------------------------------------
+#Loop through every string---------------------
+
+#get how many data exists (to know how many times you have to repeat the things within loop)
+selectObject: tgID
+nTg = Get number of strings
+
+#for loop
+#within each textgrid...
+#look at each interval of the tier from left. only process the interval that has some information 
+for i to nTg
+	#First, grab the Tg file number i for this loop. Assign: file name in "targetTgName$" variable , target Tg object in "targetTgID" variable
+	selectObject: tgID
+	targetTgName$ = Get string: i
+	targetTgID = Read from file: tg$ + "/" + targetTgName$
+
+	#Grab the Sd file number i for this loop. Assign: file name in "targetSoundName$" variable, target Sound object in "targetSoundID" variable
+	selectObject: sdID
+	targetSoundName$= Get string: i
+	targetSoundID = Read from file: sound$ + "/" + targetSoundName$
+
+	#Get how many intervals that tier 1 has
+	selectObject: targetTgID 
+	nIntervals = Get number of intervals: 1	
+
+	#Next, make a loop to look at each interval of tier1 from left to right.
+	for k to nIntervals
+		#get tier 1 label (to see if there is anything in the interval later)
+		selectObject: targetTgID 
+		kLabel$ = Get label of interval: 1, k
+
+		#do a process below ONLY when the interval is not empty
+		if kLabel$ <> ""
+
+			#save what the vowel is (to put in the output table later)
+			vowel$ = kLabel$
+
+			#get time for midpoint
+			timeS = Get start time of interval: 1, k
+			timeE = Get end time of interval: 1, k
+			intDuration = timeE - timeS
+			midpoint = timeS + (intDuration/2) 
+
+			#get F1 and F2 at that midpoint(grab soud obj --> get info)
+			selectObject: targetSoundID
+			formantID = To Formant (burg): 0, 5, 5500, 0.025, 50
+			f1 = Get value at time: 1, midpoint, "hertz", "linear"
+			f2 = Get value at time: 2, midpoint, "hertz", "linear"
+
+			#save the info on to the table
+			selectObject: tableID 
+			Append row
+			tblrow = Get number of rows
+			Set numeric value: tblrow, "speaker", i
+			Set string value: tblrow, "vowel", vowel$
+			Set numeric value: tblrow, "f1", f1
+			Set numeric value: tblrow, "f2", f2
+
+			#Cleaning (Remove the Formant object)
+			selectObject: formantID
+			Remove
+
+		endif
+	endfor
+
+endfor
+
+exitScript: "done"
