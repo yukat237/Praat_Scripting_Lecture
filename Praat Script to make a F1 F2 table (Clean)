@@ -1,0 +1,77 @@
+#############################################################
+
+#Script to make a F1 F2 summary table (clean ver.)
+
+#############################################################
+
+#------------READ ME------------#
+
+# Make sure you have folder(s) containing the names of sound files and textgrid files are the same
+# In those folder, make sure there is no unrelated .wav file or .TextGrid file.
+
+# This script works with any amount of data.
+
+#-------------------------------#
+
+#####   FORM   #####------------------------------------------------------
+
+form Filepath
+	comment Where are sounds saved? (Do not include quotation marks!)
+	text sound
+
+	comment Where are textgrids saved?
+	text tg
+endform
+
+#Make string objects---------------
+sdID = Create Strings as file list: "Sd string", sound$ + "/*.wav"
+tgID = Create Strings as file list: "Tg string", tg$ + "/*.TextGrid"
+
+#Output Table-----------
+tableID = Create Table with column names... vowelTable 0 speaker vowel f1 f2
+
+#####   LOOP    #####------------------------------------------------------
+
+selectObject: tgID
+nTg = Get number of strings
+for i to nTg
+	selectObject: tgID
+	targetTgName$ = Get string: i
+	targetTgID = Read from file: tg$ + "/" + targetTgName$
+
+	selectObject: sdID
+	targetSoundName$= Get string: i
+	targetSoundID = Read from file: sound$ + "/" + targetSoundName$
+
+	selectObject: targetTgID
+	nIntervals = Get number of intervals: 1	
+	for k to nIntervals
+		selectObject: targetTgID 
+		kLabel$ = Get label of interval: 1, k
+		if kLabel$ <> ""
+			vowel$ = kLabel$
+			timeS = Get start time of interval: 1, k
+			timeE = Get end time of interval: 1, k
+			intDuration = timeE - timeS
+			midpoint = timeS + (intDuration/2)
+			selectObject: targetSoundID
+			formantID = To Formant (burg): 0, 5, 5500, 0.025, 50
+			f1 = Get value at time: 1, midpoint, "hertz", "linear"
+			f2 = Get value at time: 2, midpoint, "hertz", "linear"
+
+			selectObject: tableID 
+			Append row
+			tblrow = Get number of rows
+			Set numeric value: tblrow, "speaker", i
+			Set string value: tblrow, "vowel", vowel$
+			Set numeric value: tblrow, "f1", f1
+			Set numeric value: tblrow, "f2", f2
+
+			selectObject: formantID
+			Remove
+		endif
+	endfor
+endfor
+
+exitScript: "done"
+
