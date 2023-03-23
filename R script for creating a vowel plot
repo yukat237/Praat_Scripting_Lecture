@@ -21,7 +21,7 @@ library(ggplot2)
 vowelTable <- read.delim(tableFileAdress, sep = ",", fileEncoding = "UTF-16")
 
 #----Rearrange the table ----#
-vowelTable2 <- as.data.frame(summarise(group_by(vowelTable, speaker, word), meanF1 = mean(f1), meanF2 = mean(f2)))
+vowelTable2 <- as.data.frame(summarise(group_by(vowelTable, speaker, vowel), meanF1 = mean(f1), meanF2 = mean(f2), , .groups = 'drop'))
 
 #----Vowel Chart Plotting ----#
 ggplot(vowelTable2, aes(x=meanF2, y=meanF1, label=vowel, color=vowel))+ geom_text()+
